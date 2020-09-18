@@ -1,5 +1,6 @@
+from requests.api import request
 import six
-
+import logging
 from requests_oauthlib import OAuth1
 from oauthlib.oauth1 import SIGNATURE_TYPE_AUTH_HEADER
 
@@ -11,6 +12,8 @@ from ..exceptions import AuthFailed, AuthCanceled, AuthUnknownError, \
                          AuthMissingParameter, AuthStateMissing, \
                          AuthStateForbidden, AuthTokenError
 from .base import BaseAuth
+
+logger = logging.getLogger("social_core")
 
 
 class OAuthAuth(BaseAuth):
@@ -65,16 +68,20 @@ class OAuthAuth(BaseAuth):
                 self.strategy.session_set(name, state)
         else:
             state = None
+        logger.debug("state = {}".format(state))
         return state
 
     def get_session_state(self):
-        return self.strategy.session_get(self.name + '_state')
+        session_state = self.strategy.session_get(self.name + '_state')
+        logger.debug("get_session_state(): strategy={} name={} state={}".format(self.strategy, self.name, session_state))
+        return session_state
 
     def get_request_state(self):
         request_state = self.data.get('state') or \
                         self.data.get('redirect_state')
         if request_state and isinstance(request_state, list):
             request_state = request_state[0]
+        logger.debug("get_request_state(): state={}".format(request_state))
         return request_state
 
     def validate_state(self):
